@@ -30,8 +30,11 @@ namespace term_Project
             {
                 Mat frame = new Mat();
                 bool isVideoRunning = true;
-                var fps = videoCapture.Fps > 0 ? videoCapture.Fps : 30; 
+                var fps = videoCapture.Fps > 0 ? videoCapture.Fps : 30;
                 int delay = (int)(1000 / fps);
+
+                // Dictionary to count objects per class
+                var objectCounts = new Dictionary<string, int>();
 
                 while (isVideoRunning && videoCapture.IsOpened())
                 {
@@ -60,19 +63,34 @@ namespace term_Project
                         g.DrawRectangle(pen, rect);
 
                         string label = $"{detection.Label.Name} ({detection.Confidence:P2})";
-                        var labelPosition = new PointF(rect.Left, Math.Max(0, rect.Top - 20)); 
+                        var labelPosition = new PointF(rect.Left, Math.Max(0, rect.Top - 20));
                         g.DrawString(label, new Font("Arial", 14), Brushes.Blue, labelPosition);
+
+                        // Update object count
+                        if (objectCounts.ContainsKey(detection.Label.Name))
+                        {
+                            objectCounts[detection.Label.Name]++;
+                        }
+                        else
+                        {
+                            objectCounts[detection.Label.Name] = 1;
+                        }
                     }
 
-                    // Cập nhật PictureBox
+                    // Update PictureBox
                     if (pictureBox.Image != null)
-                        pictureBox.Image.Dispose(); 
+                        pictureBox.Image.Dispose();
 
                     pictureBox.Image = (Bitmap)bitmap.Clone();
                     await Task.Delay(delay);
                 }
-            }
 
+                // Log object counts
+                foreach (var kvp in objectCounts)
+                {
+                    MessageBox.Show($"Class: {kvp.Key}, Count: {kvp.Value}");
+                }
+            }
         }
 
 
@@ -86,5 +104,6 @@ namespace term_Project
                 return SKImage.FromBitmap(skBitmap);
             }
         }
+
     }
 }
